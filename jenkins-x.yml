@@ -1,1 +1,57 @@
-buildPack: javascript
+buildPack: none
+pipelineConfig:
+  pipelines:
+    pullRequest:
+      pipeline:
+        agent:
+          image: gcr.io/kaniko-project/executor:9912ccbf8d22bbafbf971124600fbb0b13b9cbd6
+        stages:
+          - name: build-and-push
+            environment:
+              - name: PUSH_LATEST
+                value: false
+              - name: GOOGLE_APPLICATION_CREDENTIALS
+                value: /builder/home/kaniko-secret.json
+              - name: GIT_COMMITTER_EMAIL
+                value: jenkins-x@googlegroups.com
+              - name: GIT_COMMITTER_NAME
+                value: jenkins-x-bot
+              - name: GIT_AUTHOR_EMAIL
+                value: jenkins-x@googlegroups.com
+              - name: GIT_AUTHOR_NAME
+                value: jenkins-x-bot
+            steps:
+            # cache base images
+            - name: warm-cache
+              image: gcr.io/kaniko-project/warmer
+              command: /kaniko/warmer
+              args:
+                - --cache-dir=/workspace
+                - --image=gcr.io/jenkinsxio/builder-base:0.0.30
+
+          - name: Parent Stage
+            parallel:
+            # builders
+            - name: para1
+              steps:
+              - command: ls
+                image: busybox
+                args:
+                - -al
+                - /workspace
+
+            # builders
+            - name: para2
+              steps:
+              - command: ls
+                image: busybox
+                args:
+                - -al
+                - /workspace
+
+          # - name: fanout
+          #   command: ls
+          #   image: busybox
+          #   args:
+          #   - -al
+          #   - /workspace
